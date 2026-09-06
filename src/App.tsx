@@ -16,21 +16,23 @@ import {
   EyeOff,
   Trash2
 } from "lucide-react";
-import { Header } from "./components/Header";
-import { DashboardView } from "./components/DashboardView";
-import { MoodTracker } from "./components/MoodTracker";
-import { JournalView } from "./components/JournalView";
-import { SelfCareActivities } from "./components/SelfCareActivities";
-import { AIAssistant } from "./components/AIAssistant";
-import { ReportsView } from "./components/ReportsView";
-import { EmergencyModal } from "./components/EmergencyModal";
-import { AboutModal } from "./components/AboutModal";
-import { PTCGuidanceDirectory } from "./components/PTCGuidanceDirectory";
-import { StandardizedScreener } from "./components/StandardizedScreener";
-import { CBTWorksheet } from "./components/CBTWorksheet";
-import { SleepHabitsTracker } from "./components/SleepHabitsTracker";
-import { GuidedVoiceMeditation } from "./components/GuidedVoiceMeditation";
-import { PrivacyShield } from "./components/PrivacyShield";
+import {
+  Header,
+  DashboardView,
+  MoodTracker,
+  JournalView,
+  SelfCareActivities,
+  AIAssistant,
+  ReportsView,
+  EmergencyModal,
+  AboutModal,
+  PTCGuidanceDirectory,
+  StandardizedScreener,
+  CBTWorksheet,
+  SleepHabitsTracker,
+  GuidedVoiceMeditation,
+  PrivacyShield,
+} from "./components";
 import { MoodEntry, JournalEntry, ScreenerResult } from "./types";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth, testFirestoreConnection } from "./lib/firebase";
