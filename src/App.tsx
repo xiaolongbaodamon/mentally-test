@@ -32,20 +32,21 @@ import {
   SleepHabitsTracker,
   GuidedVoiceMeditation,
   PrivacyShield,
+  AuthScreen,
+  MentAllyLogo,
 } from "./components";
 import { MoodEntry, JournalEntry, ScreenerResult } from "./types";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth, testFirestoreConnection } from "./lib/firebase";
 import {
+  auth,
+  testFirestoreConnection,
   syncUserProfile,
   saveMoodToFirestore,
   fetchMoodsFromFirestore,
   saveJournalToFirestore,
   deleteJournalFromFirestore,
   fetchJournalsFromFirestore,
-} from "./lib/firestoreService";
-import { AuthScreen } from "./components/AuthScreen";
-import { MentAllyLogo } from "./components/MentAllyLogo";
+} from "./lib/firebase";
 
 export type MainTab = 
   | "dashboard" 
