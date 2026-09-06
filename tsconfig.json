@@ -20,6 +20,7 @@
         "./*"
       ]
     },
+    "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "noEmit": true
   }

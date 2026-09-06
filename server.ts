@@ -7,7 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID
+  ? (Number(process.env.PORT) || 3000)
+  : 3000;
 
 app.use(express.json({ limit: "5mb" }));
 
