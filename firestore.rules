@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Authenticated Student Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Disallow searching all student profiles
+      allow create, update: if isOwner(userId) && isValidId(userId);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Student Private Mood Logs
+      match /moods/{moodId} {
+        allow read, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(moodId);
+        allow delete: if isOwner(userId) && isValidId(moodId);
+      }
+
+      // Student Private Reflective Journals
+      match /journals/{journalId} {
+        allow read, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(journalId);
+        allow delete: if isOwner(userId) && isValidId(journalId);
+      }
+
+      // Student Daily Habit Logs
+      match /habits/{date} {
+        allow read, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(date);
+        allow delete: if isOwner(userId) && isValidId(date);
+      }
+
+      // Standardized Screener Assessments (PHQ-9 / GAD-7)
+      match /screeners/{screenerId} {
+        allow read, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(screenerId);
+        allow delete: if isOwner(userId) && isValidId(screenerId);
+      }
+
+      // CBT Thought Reframing Logs
+      match /cbt/{cbtId} {
+        allow read, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(cbtId);
+        allow delete: if isOwner(userId) && isValidId(cbtId);
+      }
+    }
+  }
+}

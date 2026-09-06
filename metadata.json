@@ -1,0 +1,6 @@
+{
+  "name": "MentAlly: Mental Wellness & Self-Care",
+  "description": "A personalized mental wellness and self-care platform built specifically for Pateros Technological College (PTC) students, featuring standardized screeners, CBT thought reframing, sleep and habit tracking, campus guidance directory, and non-clinical AI support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

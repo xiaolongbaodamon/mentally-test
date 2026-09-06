@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Authenticated student user profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "institution": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastLoginAt": { "type": "string" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "Mood": {
+      "title": "Mood",
+      "description": "Student daily mood and emotional trigger logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "score": { "type": "number" },
+        "label": { "type": "string" },
+        "emoji": { "type": "string" },
+        "feelings": { "type": "array" },
+        "triggers": { "type": "array" },
+        "note": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "score", "label", "emoji"]
+    },
+    "Journal": {
+      "title": "Journal",
+      "description": "Private student reflective journal entries",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "prompt": { "type": "string" },
+        "moodTag": { "type": "string" },
+        "tags": { "type": "array" }
+      },
+      "required": ["id", "timestamp", "title", "content"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "Daily wellness and sleep habits",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "sleepHours": { "type": "number" },
+        "waterGlasses": { "type": "number" },
+        "studyBreaksTaken": { "type": "number" },
+        "academicStressLevel": { "type": "number" }
+      },
+      "required": ["date", "sleepHours", "waterGlasses", "studyBreaksTaken", "academicStressLevel"]
+    },
+    "Screener": {
+      "title": "Screener",
+      "description": "PHQ-9 and GAD-7 standardized psychological assessments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "score": { "type": "number" },
+        "severity": { "type": "string" },
+        "interpretation": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "answers": { "type": "array" }
+      },
+      "required": ["id", "type", "timestamp", "score", "severity", "answers"]
+    },
+    "CBTRecord": {
+      "title": "CBTRecord",
+      "description": "Cognitive Behavioral Therapy thought reframing records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "situation": { "type": "string" },
+        "automaticThought": { "type": "string" },
+        "emotion": { "type": "string" },
+        "cognitiveDistortion": { "type": "string" },
+        "evidenceAgainst": { "type": "string" },
+        "balancedThought": { "type": "string" },
+        "outcomeEmotion": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "situation", "automaticThought", "balancedThought"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Student profile document"
+    },
+    "/users/{userId}/moods/{moodId}": {
+      "schema": "Mood",
+      "description": "Student mood records"
+    },
+    "/users/{userId}/journals/{journalId}": {
+      "schema": "Journal",
+      "description": "Student private journal entries"
+    },
+    "/users/{userId}/habits/{date}": {
+      "schema": "Habit",
+      "description": "Student daily habit tracking records"
+    },
+    "/users/{userId}/screeners/{screenerId}": {
+      "schema": "Screener",
+      "description": "Student standardized mental health screener results"
+    },
+    "/users/{userId}/cbt/{cbtId}": {
+      "schema": "CBTRecord",
+      "description": "Student CBT thought reframing records"
+    }
+  }
+}
