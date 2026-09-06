@@ -14,12 +14,32 @@ function caseInsensitiveResolver(): Plugin {
       if (!importer || !source.startsWith('.')) return null;
 
       try {
-        const importerDir = path.dirname(importer);
-        const targetDir = path.resolve(importerDir, path.dirname(source));
-        const targetBase = path.basename(source);
+        const cleanImporter = importer.split('?')[0].split('#')[0];
+        const importerDir = path.dirname(cleanImporter);
 
-        if (!fs.existsSync(targetDir)) return null;
-        const entries = fs.readdirSync(targetDir);
+        // Resolve directory parts case-insensitively
+        const relativeParts = source.split(/[/\\]/);
+        let currentDir = importerDir;
+        for (let i = 0; i < relativeParts.length - 1; i++) {
+          const part = relativeParts[i];
+          if (part === '.' || part === '') continue;
+          if (part === '..') {
+            currentDir = path.dirname(currentDir);
+            continue;
+          }
+          if (!fs.existsSync(currentDir)) return null;
+          const dirEntries = fs.readdirSync(currentDir);
+          const matchedDir = dirEntries.find((e) => e.toLowerCase() === part.toLowerCase());
+          if (matchedDir) {
+            currentDir = path.join(currentDir, matchedDir);
+          } else {
+            return null;
+          }
+        }
+
+        const targetBase = relativeParts[relativeParts.length - 1];
+        if (!fs.existsSync(currentDir)) return null;
+        const entries = fs.readdirSync(currentDir);
 
         const extensions = ['', '.tsx', '.ts', '.jsx', '.js', '.json', '.mjs'];
         for (const ext of extensions) {
@@ -32,7 +52,7 @@ function caseInsensitiveResolver(): Plugin {
             (entry) => entry.toLowerCase() === candidate.toLowerCase()
           );
           if (found) {
-            return path.resolve(targetDir, found);
+            return path.resolve(currentDir, found);
           }
         }
       } catch {
