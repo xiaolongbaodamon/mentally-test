@@ -69,6 +69,38 @@ function caseInsensitiveResolver(): Plugin {
   };
 }
 
+// Automatically build universal case-insensitive aliases for all component files
+function getComponentAliases() {
+  const aliases: Array<{ find: RegExp | string; replacement: string }> = [
+    { find: '@', replacement: path.resolve(__dirname, '.') },
+    {
+      find: /.*\/[Ff]irestore[Ss]ervice(\.ts)?$/,
+      replacement: path.resolve(__dirname, 'src/lib/firebase.ts'),
+    },
+  ];
+
+  try {
+    const componentsDir = path.resolve(__dirname, 'src/components');
+    if (fs.existsSync(componentsDir)) {
+      const files = fs.readdirSync(componentsDir);
+      for (const file of files) {
+        if (!file.endsWith('.tsx') && !file.endsWith('.ts')) continue;
+        if (file === 'index.ts') continue;
+        const baseName = file.replace(/\.(tsx|ts)$/, '');
+        aliases.push({
+          // Matches any import ending with /<componentName> or \<componentName> (case-insensitive)
+          find: new RegExp(`.*[\\/\\\\]${baseName}(\\.(tsx|ts|jsx|js))?$`, 'i'),
+          replacement: path.resolve(componentsDir, file),
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error creating component aliases:', err);
+  }
+
+  return aliases;
+}
+
 export default defineConfig(() => {
   return {
     plugins: [caseInsensitiveResolver(), react(), tailwindcss()],
@@ -96,21 +128,7 @@ export default defineConfig(() => {
         'react',
         'react-dom',
       ],
-      alias: [
-        { find: '@', replacement: path.resolve(__dirname, '.') },
-        {
-          find: /.*\/[Ss]elf[Cc]are[Aa]ctivities(\.tsx?)?$/,
-          replacement: path.resolve(__dirname, 'src/components/SelfCareActivities.tsx'),
-        },
-        {
-          find: /.*\/[Rr]eports[Vv]iew(\.tsx?)?$/,
-          replacement: path.resolve(__dirname, 'src/components/ReportsView.tsx'),
-        },
-        {
-          find: /.*\/[Ff]irestore[Ss]ervice(\.ts)?$/,
-          replacement: path.resolve(__dirname, 'src/lib/firebase.ts'),
-        },
-      ],
+      alias: getComponentAliases(),
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },
     server: {
