@@ -1,15 +1,79 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import fs from 'fs';
+import {defineConfig, Plugin} from 'vite';
+
+// Case-insensitive module resolver to prevent Linux / Docker / Railway deployment failures
+// when importing files whose casing might differ between Git index, Windows/macOS, and Linux.
+function caseInsensitiveResolver(): Plugin {
+  return {
+    name: 'case-insensitive-resolver',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      if (!importer || !source.startsWith('.')) return null;
+
+      try {
+        const importerDir = path.dirname(importer);
+        const targetDir = path.resolve(importerDir, path.dirname(source));
+        const targetBase = path.basename(source);
+
+        if (!fs.existsSync(targetDir)) return null;
+        const entries = fs.readdirSync(targetDir);
+
+        const extensions = ['', '.tsx', '.ts', '.jsx', '.js', '.json', '.mjs'];
+        for (const ext of extensions) {
+          const candidate = targetBase + ext;
+          if (entries.includes(candidate)) {
+            // Exact casing match found: let Vite's native resolver handle it directly
+            return null;
+          }
+          const found = entries.find(
+            (entry) => entry.toLowerCase() === candidate.toLowerCase()
+          );
+          if (found) {
+            return path.resolve(targetDir, found);
+          }
+        }
+      } catch {
+        return null;
+      }
+      return null;
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [caseInsensitiveResolver(), react(), tailwindcss()],
+    optimizeDeps: {
+      include: [
+        'firebase/app',
+        'firebase/auth',
+        'firebase/firestore',
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'lucide-react',
+      ],
+    },
     resolve: {
+      dedupe: [
+        '@firebase/app',
+        'firebase/app',
+        '@firebase/auth',
+        'firebase/auth',
+        '@firebase/firestore',
+        'firebase/firestore',
+        'react',
+        'react-dom',
+      ],
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+      extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
