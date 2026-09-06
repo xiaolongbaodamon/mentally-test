@@ -2,7 +2,7 @@ export { Header } from "./Header";
 export { DashboardView } from "./DashboardView";
 export { MoodTracker } from "./MoodTracker";
 export { JournalView } from "./JournalView";
-export { SelfCareActivities } from "./SelfCareActivities";
+export { SelfCareActivities } from "./SelfcareActivities";
 export { AIAssistant } from "./AIAssistant";
 export { ReportsView } from "./ReportsView";
 export { EmergencyModal } from "./EmergencyModal";
