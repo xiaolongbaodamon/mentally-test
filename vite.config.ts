@@ -41,18 +41,24 @@ function caseInsensitiveResolver(): Plugin {
         if (!fs.existsSync(currentDir)) return null;
         const entries = fs.readdirSync(currentDir);
 
-        const extensions = ['', '.tsx', '.ts', '.jsx', '.js', '.json', '.mjs'];
+        const extensions = ['.tsx', '.ts', '.jsx', '.js', '.json', '.mjs', ''];
         for (const ext of extensions) {
           const candidate = targetBase + ext;
-          if (entries.includes(candidate)) {
-            // Exact casing match found: let Vite's native resolver handle it directly
-            return null;
-          }
           const found = entries.find(
             (entry) => entry.toLowerCase() === candidate.toLowerCase()
           );
           if (found) {
-            return path.resolve(currentDir, found);
+            const resolved = path.resolve(currentDir, found);
+            if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
+              const indexExtensions = ['index.tsx', 'index.ts', 'index.jsx', 'index.js'];
+              for (const idx of indexExtensions) {
+                const idxPath = path.join(resolved, idx);
+                if (fs.existsSync(idxPath)) {
+                  return idxPath;
+                }
+              }
+            }
+            return resolved;
           }
         }
       } catch {
@@ -90,9 +96,21 @@ export default defineConfig(() => {
         'react',
         'react-dom',
       ],
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
+      alias: [
+        { find: '@', replacement: path.resolve(__dirname, '.') },
+        {
+          find: /.*\/[Ss]elf[Cc]are[Aa]ctivities(\.tsx?)?$/,
+          replacement: path.resolve(__dirname, 'src/components/SelfCareActivities.tsx'),
+        },
+        {
+          find: /.*\/[Rr]eports[Vv]iew(\.tsx?)?$/,
+          replacement: path.resolve(__dirname, 'src/components/ReportsView.tsx'),
+        },
+        {
+          find: /.*\/[Ff]irestore[Ss]ervice(\.ts)?$/,
+          replacement: path.resolve(__dirname, 'src/lib/firebase.ts'),
+        },
+      ],
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },
     server: {
