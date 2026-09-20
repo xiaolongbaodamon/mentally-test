@@ -14,11 +14,13 @@ import {
   Building2,
   Lock,
   EyeOff,
-  Trash2
+  Trash2,
+  History
 } from "lucide-react";
 import { Header } from "./components/Header";
 import { DashboardView } from "./components/DashboardView";
 import { MoodTracker } from "./components/MoodTracker";
+import { MoodRecordsView } from "./components/MoodRecordsView";
 import { JournalView } from "./components/JournalView";
 import { SelfCareActivities } from "./components/SelfCareActivities";
 import { AIAssistant } from "./components/AIAssistant";
@@ -49,6 +51,7 @@ import {
 export type MainTab = 
   | "dashboard" 
   | "mood" 
+  | "mood_records"
   | "journal" 
   | "screener" 
   | "cbt" 
@@ -404,7 +407,33 @@ export default function App() {
                 }`}
               >
                 <Heart className="w-4 h-4" />
-                <span>Mood Track</span>
+                <span>Mood Tracker</span>
+              </button>
+
+              <button
+                id="nav-tab-mood-records"
+                onClick={() => setActiveTab("mood_records")}
+                className={`shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap min-h-[40px] active:scale-95 ${
+                  activeTab === "mood_records"
+                    ? "bg-teal-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                <History className="w-4 h-4" />
+                <span>Mood Records</span>
+              </button>
+
+              <button
+                id="nav-tab-ai"
+                onClick={() => setActiveTab("ai")}
+                className={`shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap min-h-[40px] active:scale-95 ${
+                  activeTab === "ai"
+                    ? "bg-teal-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                <Bot className="w-4 h-4" />
+                <span>AI ChatBot</span>
               </button>
 
               <button
@@ -499,19 +528,6 @@ export default function App() {
               </button>
 
               <button
-                id="nav-tab-ai"
-                onClick={() => setActiveTab("ai")}
-                className={`shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap min-h-[40px] active:scale-95 ${
-                  activeTab === "ai"
-                    ? "bg-teal-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <Bot className="w-4 h-4" />
-                <span>AI Companion</span>
-              </button>
-
-              <button
                 id="nav-tab-reports"
                 onClick={() => setActiveTab("reports")}
                 className={`shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap min-h-[40px] active:scale-95 ${
@@ -545,6 +561,15 @@ export default function App() {
                 onAddMood={handleAddMood}
                 onDeleteMood={handleDeleteMood}
                 onOpenActivitiesWithSuggestion={(action) => handleNavigate("activities", action)}
+                onNavigateRecords={() => setActiveTab("mood_records")}
+              />
+            )}
+
+            {activeTab === "mood_records" && (
+              <MoodRecordsView
+                moods={moods}
+                onDeleteMood={handleDeleteMood}
+                onNavigateLogMood={() => setActiveTab("mood")}
               />
             )}
 
@@ -630,23 +655,13 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab("screener")}
+          onClick={() => setActiveTab("mood_records")}
           className={`flex flex-col items-center gap-0.5 text-[10px] font-bold ${
-            activeTab === "screener" ? "text-teal-700" : "text-slate-400"
+            activeTab === "mood_records" ? "text-teal-700" : "text-slate-400"
           }`}
         >
-          <ClipboardCheck className="w-4 h-4" />
-          <span>Screener</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("ptc")}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold ${
-            activeTab === "ptc" ? "text-teal-700" : "text-slate-400"
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>PTC</span>
+          <History className="w-4 h-4" />
+          <span>Records</span>
         </button>
 
         <button
@@ -657,6 +672,16 @@ export default function App() {
         >
           <Bot className="w-4 h-4" />
           <span>AI Chat</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("ptc")}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold ${
+            activeTab === "ptc" ? "text-teal-700" : "text-slate-400"
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>PTC</span>
         </button>
       </div>
 

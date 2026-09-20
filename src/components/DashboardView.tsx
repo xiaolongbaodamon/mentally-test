@@ -21,7 +21,7 @@ interface DashboardViewProps {
   moods: MoodEntry[];
   journals: JournalEntry[];
   streakDays: number;
-  onNavigateTab: (tab: "mood" | "journal" | "activities" | "ai" | "reports", subTab?: string) => void;
+  onNavigateTab: (tab: "mood" | "mood_records" | "journal" | "activities" | "ai" | "reports", subTab?: string) => void;
   onQuickLogMood: () => void;
   isMobileFrame?: boolean;
 }
@@ -183,13 +183,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
           </div>
 
-          <button
-            onClick={() => onNavigateTab("mood")}
-            className="w-full mt-2.5 py-2.5 bg-slate-50 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition-colors flex items-center justify-center gap-1.5"
-          >
-            {latestMood ? "Update Mood Log" : "Log Check-in Now"}
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="mt-2.5 flex items-center gap-1.5">
+            <button
+              onClick={() => onNavigateTab("mood")}
+              className="flex-1 py-2.5 bg-slate-50 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>{latestMood ? "Log Mood" : "Check-in Now"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => onNavigateTab("mood_records")}
+              className="py-2.5 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-xl text-xs font-bold border border-teal-200 transition-colors shrink-0"
+              title="View all mood records"
+            >
+              Records
+            </button>
+          </div>
         </div>
 
         {/* Quick Journal Card */}

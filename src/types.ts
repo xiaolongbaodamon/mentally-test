@@ -16,18 +16,21 @@ export interface JournalEntry {
   timestamp: string;
   title: string;
   content: string;
-  prompt?: string;
   tags: string[];
+  moodLabel?: string;
   moodTag?: string;
+  prompt?: string;
 }
 
 export interface ScreenerResult {
   id: string;
   timestamp: string;
-  instrument: string;
+  type: "PHQ-9" | "GAD-7" | "PSS-10";
   score: number;
+  maxScore: number;
   severity: string;
-  answers: number[];
+  interpretation: string;
+  recommendation: string;
 }
 
 export interface CBTThoughtRecord {
@@ -39,43 +42,51 @@ export interface CBTThoughtRecord {
   cognitiveDistortion: string;
   evidenceAgainst: string;
   balancedThought: string;
-  outcomeEmotion: string;
+  outcomeEmotion?: string;
 }
 
-export interface DailyHabitLog {
-  date: string;
-  sleepHours: number;
-  sleepQuality: number;
-  exercise: boolean;
-  hydration: boolean;
-  screenBreak: boolean;
-  notes?: string;
-}
-
-export interface AIRecommendation {
+export interface PTCCampusResource {
+  id: string;
   title: string;
-  category: string;
-  actionType: string;
-  duration: string;
-  reason: string;
-  tip: string;
+  department: string;
+  contactPerson: string;
+  location: string;
+  email: string;
+  phone: string;
+  operatingHours: string;
+  services: string[];
+  confidentialityNotice: string;
 }
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: string;
+  timestamp?: string;
 }
 
-export interface PTCCampusResource {
-  id: string;
-  department: string;
+export interface AIRecommendation {
   title: string;
-  services: string[];
-  location: string;
-  hours: string;
-  contactEmail: string;
-  contactNumber: string;
-  notes: string;
+  category: string;
+  actionType: "breathing" | "grounding" | "ambient" | "journal" | "ptc";
+  duration: string;
+  reason: string;
+  tip: string;
+}
+
+export interface SleepHabitEntry {
+  id: string;
+  date: string;
+  hoursSlept: number;
+  quality: "Restful" | "Fair" | "Poor" | "Restless";
+  caffeineLate: boolean;
+  screenBeforeBed: boolean;
+  notes?: string;
+}
+
+export interface DailyHabitLog {
+  id: string;
+  date: string;
+  completedHabits: string[];
+  notes?: string;
 }

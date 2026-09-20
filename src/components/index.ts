@@ -16,3 +16,4 @@ export { PrivacyShield } from "./PrivacyShield";
 export { AuthScreen } from "./AuthScreen";
 export { MentAllyLogo } from "./MentAllyLogo";
 export { PTCLogo } from "./PTCLogo";
+export { MoodRecordsView } from "./MoodRecordsView";

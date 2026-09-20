@@ -21,6 +21,7 @@ interface MoodTrackerProps {
   onAddMood: (entry: Omit<MoodEntry, "id" | "timestamp">) => void;
   onDeleteMood: (id: string) => void;
   onOpenActivitiesWithSuggestion?: (action: string) => void;
+  onNavigateRecords?: () => void;
 }
 
 export const MoodTracker: React.FC<MoodTrackerProps> = ({
@@ -28,6 +29,7 @@ export const MoodTracker: React.FC<MoodTrackerProps> = ({
   onAddMood,
   onDeleteMood,
   onOpenActivitiesWithSuggestion,
+  onNavigateRecords,
 }) => {
   const [score, setScore] = useState<MoodScore>(7);
   const [selectedFeelings, setSelectedFeelings] = useState<string[]>([]);
@@ -242,14 +244,26 @@ export const MoodTracker: React.FC<MoodTrackerProps> = ({
 
       {/* Mood History and Trends */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <h3 className="text-base font-bold text-slate-900">Recent Mood Entries & Insights</h3>
             <p className="text-xs text-slate-500">Historical logs to identify emotional patterns over time</p>
           </div>
-          <div className="text-right">
-            <span className="text-xs text-slate-500 font-medium">Average Mood Score</span>
-            <div className="text-lg font-black text-teal-800">{averageScore} / 10</div>
+          <div className="flex items-center gap-3">
+            {onNavigateRecords && (
+              <button
+                type="button"
+                onClick={onNavigateRecords}
+                className="px-3 py-1.5 rounded-xl border border-teal-200 text-teal-800 bg-teal-50/70 hover:bg-teal-100 text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <span>View All Mood Records</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <div className="text-right">
+              <span className="text-xs text-slate-500 font-medium">Average Mood Score</span>
+              <div className="text-lg font-black text-teal-800">{averageScore} / 10</div>
+            </div>
           </div>
         </div>
 
