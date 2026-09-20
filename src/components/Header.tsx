@@ -3,6 +3,7 @@ import type { User } from "firebase/auth";
 import { 
   Heart, 
   ShieldAlert, 
+  ShieldCheck,
   Smartphone, 
   Monitor, 
   Flame, 
@@ -10,9 +11,11 @@ import {
   Trash2, 
   LogOut, 
   LogIn, 
+  Settings,
   User as UserIcon 
 } from "lucide-react";
 import { MentAllyLogo } from "./MentAllyLogo";
+import { ADMIN_EMAIL, UserProfileData } from "../types";
 
 interface HeaderProps {
   onOpenEmergency: () => void;
@@ -24,8 +27,11 @@ interface HeaderProps {
   onLock?: () => void;
   onResetData?: () => void;
   currentUser?: User | null;
+  currentProfile?: UserProfileData | null;
   onSignOut?: () => void;
   onOpenAuth?: () => void;
+  onOpenAdmin?: () => void;
+  onOpenAccountSettings?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,9 +43,14 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleCamouflage,
   onResetData,
   currentUser,
+  currentProfile,
   onSignOut,
   onOpenAuth,
+  onOpenAdmin,
+  onOpenAccountSettings,
 }) => {
+  const isAdmin = currentUser?.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-2.5 sm:px-6 py-2 sm:py-2.5 transition-all">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
@@ -142,29 +153,46 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="sm:hidden">SOS</span>
           </button>
 
+          {/* Admin Panel Access Button for xiaolongbao312006@gmail.com */}
+          {isAdmin && onOpenAdmin && (
+            <button
+              id="header-admin-btn"
+              onClick={onOpenAdmin}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-900 hover:bg-black text-amber-300 border border-amber-400/50 rounded-xl text-[11px] sm:text-xs font-black shadow-xs transition-all shrink-0 min-h-[36px] active:scale-95"
+              title="Open PTC Executive Administrator Console"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline">Admin Panel</span>
+              <span className="sm:hidden">Admin</span>
+            </button>
+          )}
+
           {/* User Account / Profile Badge */}
           {currentUser ? (
             <div className="flex items-center gap-1 pl-1 border-l border-slate-200 shrink-0">
-              <div 
-                className="flex items-center gap-1.5 p-1 sm:pr-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[36px]"
-                title={`Signed in as ${currentUser.displayName || currentUser.email}`}
+              <button 
+                id="header-user-profile-btn"
+                onClick={onOpenAccountSettings}
+                className="flex items-center gap-1.5 p-1 sm:px-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl min-h-[36px] transition-all text-left group active:scale-95"
+                title="Open Account Settings (Instant Live Sync)"
               >
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
-                    alt={currentUser.displayName || "User"}
+                    alt={currentProfile?.displayName || currentUser.displayName || "User"}
                     className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg object-cover"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-teal-600 text-white font-bold text-[10px] sm:text-xs flex items-center justify-center shrink-0">
-                    {(currentUser.displayName || currentUser.email || "S").charAt(0).toUpperCase()}
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-teal-600 group-hover:bg-teal-700 text-white font-bold text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-xs">
+                    {(currentProfile?.displayName || currentUser.displayName || currentUser.email || "S").charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="hidden md:inline text-[11px] font-semibold text-slate-700 max-w-[85px] truncate">
-                  {currentUser.displayName?.split(" ")[0] || currentUser.email?.split("@")[0]}
+                <span className="hidden md:inline text-[11px] font-bold text-slate-800 max-w-[85px] truncate">
+                  {(currentProfile?.displayName || currentUser.displayName)?.split(" ")[0] || currentUser.email?.split("@")[0]}
                 </span>
-              </div>
+                <Settings className="w-3 h-3 text-slate-400 group-hover:text-slate-700 ml-0.5 shrink-0" />
+              </button>
 
               {onSignOut && (
                 <button

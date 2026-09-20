@@ -12,9 +12,16 @@ import {
   Calendar,
   Flame,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Bell,
+  Megaphone,
+  Building2,
+  GraduationCap,
+  Zap,
+  Settings
 } from "lucide-react";
-import { MoodEntry, JournalEntry, AIRecommendation } from "../types";
+import type { User } from "firebase/auth";
+import { MoodEntry, JournalEntry, AIRecommendation, CampusAnnouncement, UserProfileData } from "../types";
 import { DAILY_AFFIRMATIONS } from "../data/wellnessContent";
 
 interface DashboardViewProps {
@@ -24,6 +31,10 @@ interface DashboardViewProps {
   onNavigateTab: (tab: "mood" | "mood_records" | "journal" | "activities" | "ai" | "reports", subTab?: string) => void;
   onQuickLogMood: () => void;
   isMobileFrame?: boolean;
+  announcements?: CampusAnnouncement[];
+  currentProfile?: UserProfileData | null;
+  currentUser?: User | null;
+  onOpenAccountSettings?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -33,10 +44,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateTab,
   onQuickLogMood,
   isMobileFrame = false,
+  announcements = [],
+  currentProfile,
+  currentUser,
+  onOpenAccountSettings,
 }) => {
   const [affirmation, setAffirmation] = useState(DAILY_AFFIRMATIONS[0]);
   const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
   const [isLoadingRecs, setIsLoadingRecs] = useState(false);
+
+  // Active campus announcements from Firestore
+  const activeAnnouncements = announcements.filter((a) => a.active);
 
   // Pick affirmation
   useEffect(() => {
@@ -116,6 +134,90 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div id="dashboard-view-container" className="space-y-6">
+      {/* Student Welcome & Instant Live Sync Header */}
+      {currentUser && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-teal-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+              {(currentProfile?.displayName || currentUser.displayName || currentUser.email || "S").charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                  Welcome back, {currentProfile?.displayName || currentUser.displayName || "PTC Student"}!
+                </h2>
+                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <Zap className="w-2.5 h-2.5" />
+                  Live Synced
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mt-0.5 flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  {currentProfile?.institution || "Pateros Technological College"}
+                </span>
+                {currentProfile?.course && (
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                    {currentProfile.course} {currentProfile.yearLevel ? `• ${currentProfile.yearLevel}` : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {onOpenAccountSettings && (
+            <button
+              id="dashboard-open-account-settings-btn"
+              onClick={onOpenAccountSettings}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-teal-400 bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-800 font-bold text-xs transition-all shrink-0 active:scale-95"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Edit Account Info</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Live Campus Guidance Announcements (Instant Push from Admin Panel) */}
+      {activeAnnouncements.length > 0 && (
+        <div className="space-y-2">
+          {activeAnnouncements.slice(0, 2).map((ann) => (
+            <div
+              key={ann.id}
+              className={`p-4 rounded-2xl border transition-all shadow-xs flex items-start gap-3 ${
+                ann.priority === "urgent"
+                  ? "bg-rose-50/90 border-rose-200 text-rose-950"
+                  : ann.priority === "important"
+                  ? "bg-amber-50/90 border-amber-200 text-amber-950"
+                  : "bg-teal-50/90 border-teal-200 text-teal-950"
+              }`}
+            >
+              <div className={`p-2 rounded-xl shrink-0 ${
+                ann.priority === "urgent" ? "bg-rose-600 text-white" : ann.priority === "important" ? "bg-amber-600 text-white" : "bg-teal-600 text-white"
+              }`}>
+                <Megaphone className="w-4 h-4" />
+              </div>
+
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-xs uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/80 border border-current/20 text-[10px]">
+                      {ann.author}
+                    </span>
+                    <h3 className="font-bold text-xs sm:text-sm">{ann.title}</h3>
+                  </div>
+                  <span className="text-[10px] opacity-75 font-mono">
+                    {new Date(ann.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed opacity-90">{ann.content}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Welcome & Affirmation Card */}
       <div className="bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-sm">
         <div className="absolute right-0 top-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />

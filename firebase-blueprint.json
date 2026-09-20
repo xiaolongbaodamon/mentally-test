@@ -91,6 +91,21 @@
         "outcomeEmotion": { "type": "string" }
       },
       "required": ["id", "timestamp", "situation", "automaticThought", "balancedThought"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Campus mental health announcements created by administrator",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "priority": { "type": "string" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "title", "content", "priority", "createdAt", "active"]
     }
   },
   "firestore": {
@@ -117,6 +132,10 @@
     "/users/{userId}/cbt/{cbtId}": {
       "schema": "CBTRecord",
       "description": "Student CBT thought reframing records"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Campus announcements managed by administrator"
     }
   }
 }

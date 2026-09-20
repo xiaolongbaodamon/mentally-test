@@ -17,3 +17,5 @@ export { AuthScreen } from "./AuthScreen";
 export { MentAllyLogo } from "./MentAllyLogo";
 export { PTCLogo } from "./PTCLogo";
 export { MoodRecordsView } from "./MoodRecordsView";
+export { AdminPanelView } from "./AdminPanelView";
+export { AccountSettingsModal } from "./AccountSettingsModal";

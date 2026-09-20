@@ -15,7 +15,8 @@ import {
   Lock,
   EyeOff,
   Trash2,
-  History
+  History,
+  ShieldCheck
 } from "lucide-react";
 import { Header } from "./components/Header";
 import { DashboardView } from "./components/DashboardView";
@@ -35,7 +36,9 @@ import { GuidedVoiceMeditation } from "./components/GuidedVoiceMeditation";
 import { PrivacyShield } from "./components/PrivacyShield";
 import { AuthScreen } from "./components/AuthScreen";
 import { MentAllyLogo } from "./components/MentAllyLogo";
-import { MoodEntry, JournalEntry, ScreenerResult } from "./types";
+import { AdminPanelView } from "./components/AdminPanelView";
+import { AccountSettingsModal } from "./components/AccountSettingsModal";
+import { MoodEntry, JournalEntry, ScreenerResult, ADMIN_EMAIL, UserProfileData, CampusAnnouncement } from "./types";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import {
   auth,
@@ -43,9 +46,13 @@ import {
   syncUserProfile,
   saveMoodToFirestore,
   fetchMoodsFromFirestore,
+  subscribeToMoods,
   saveJournalToFirestore,
   deleteJournalFromFirestore,
   fetchJournalsFromFirestore,
+  subscribeToJournals,
+  subscribeToUserProfile,
+  subscribeToAnnouncements,
 } from "./lib/firebase";
 
 export type MainTab = 
@@ -60,7 +67,8 @@ export type MainTab =
   | "meditation" 
   | "ptc" 
   | "ai" 
-  | "reports";
+  | "reports"
+  | "admin";
 
 // Sanitizer helpers to remove any legacy demo mock data
 const sanitizeSavedMoods = (raw: any[]): MoodEntry[] => {
@@ -120,8 +128,14 @@ export default function App() {
 
   // Firebase Auth & Live Profile State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentProfile, setCurrentProfile] = useState<UserProfileData | null>(null);
+  const [campusAnnouncements, setCampusAnnouncements] = useState<CampusAnnouncement[]>([]);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Authorized Admin Check for xiaolongbao312006@gmail.com
+  const isAdmin = currentUser?.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   // Privacy & Camouflage Mode States
   const [isLocked, setIsLocked] = useState(false);
@@ -158,47 +172,70 @@ export default function App() {
     }
   });
 
-  // Listen to Live Firebase Auth State
+  // Listen to Live Firebase Auth State & Live Firestore Subscriptions (Instant Zero-Refresh)
   useEffect(() => {
     testFirestoreConnection();
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    // Global real-time campus announcements listener (no refresh needed)
+    const unsubAnnouncements = subscribeToAnnouncements((list) => {
+      setCampusAnnouncements(list);
+    });
+
+    let unsubProfile: (() => void) | null = null;
+    let unsubMoods: (() => void) | null = null;
+    let unsubJournals: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      // Clean up previous user subscriptions if any
+      if (unsubProfile) { unsubProfile(); unsubProfile = null; }
+      if (unsubMoods) { unsubMoods(); unsubMoods = null; }
+      if (unsubJournals) { unsubJournals(); unsubJournals = null; }
+
       setCurrentUser(user);
       setIsAuthLoading(false);
 
       if (user) {
         setShowAuthModal(false);
 
-        // Sync student profile to Firestore
+        // Sync student profile to Firestore on login
         try {
           await syncUserProfile(user);
         } catch (err) {
-          console.warn("Profile sync note:", err);
+          console.warn("Profile initial sync note:", err);
         }
 
-        // Fetch live moods from Firestore
-        try {
-          const remoteMoods = await fetchMoodsFromFirestore(user.uid);
-          if (remoteMoods && remoteMoods.length > 0) {
-            setMoods(remoteMoods);
+        // 1. Live real-time user profile listener (instantly updates display name, college, course, etc.)
+        unsubProfile = subscribeToUserProfile(user.uid, (profile) => {
+          if (profile) {
+            setCurrentProfile(profile);
           }
-        } catch (err) {
-          console.warn("Could not load moods from Firestore:", err);
-        }
+        });
 
-        // Fetch live journals from Firestore
-        try {
-          const remoteJournals = await fetchJournalsFromFirestore(user.uid);
-          if (remoteJournals && remoteJournals.length > 0) {
-            setJournals(remoteJournals);
+        // 2. Live real-time user moods listener (instant sync without refresh)
+        unsubMoods = subscribeToMoods(user.uid, (liveMoods) => {
+          if (Array.isArray(liveMoods)) {
+            setMoods(liveMoods);
           }
-        } catch (err) {
-          console.warn("Could not load journals from Firestore:", err);
-        }
+        });
+
+        // 3. Live real-time user journals listener (instant sync without refresh)
+        unsubJournals = subscribeToJournals(user.uid, (liveJournals) => {
+          if (Array.isArray(liveJournals)) {
+            setJournals(liveJournals);
+          }
+        });
+      } else {
+        setCurrentProfile(null);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      unsubAnnouncements();
+      if (unsubProfile) unsubProfile();
+      if (unsubMoods) unsubMoods();
+      if (unsubJournals) unsubJournals();
+    };
   }, []);
 
   // Sync to local storage for offline resilience
@@ -347,8 +384,11 @@ export default function App() {
         onLock={() => setIsLocked(true)}
         onResetData={handleClearAllData}
         currentUser={currentUser}
+        currentProfile={currentProfile}
         onSignOut={handleSignOut}
         onOpenAuth={() => setShowAuthModal(true)}
+        onOpenAdmin={() => setActiveTab("admin")}
+        onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
       />
 
       {/* Privacy Shield & Lock Overlay */}
@@ -539,6 +579,23 @@ export default function App() {
                 <BarChart3 className="w-4 h-4" />
                 <span>Reports</span>
               </button>
+
+              {/* Executive Admin Panel Tab - Exclusive to xiaolongbao312006@gmail.com */}
+              {isAdmin && (
+                <button
+                  id="nav-tab-admin"
+                  onClick={() => setActiveTab("admin")}
+                  className={`shrink-0 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-3.5 rounded-xl text-xs font-black transition-all whitespace-nowrap min-h-[40px] active:scale-95 ${
+                    activeTab === "admin"
+                      ? "bg-slate-900 text-amber-300 border border-amber-400/50 shadow-xs"
+                      : "text-amber-800 bg-amber-50/90 border border-amber-300/80 hover:bg-amber-100"
+                  }`}
+                  title="Campus Executive Admin Panel"
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-500" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
             </nav>
           </div>
 
@@ -552,6 +609,10 @@ export default function App() {
                 onNavigateTab={handleNavigate}
                 onQuickLogMood={() => setActiveTab("mood")}
                 isMobileFrame={isMobileFrame}
+                announcements={campusAnnouncements}
+                currentProfile={currentProfile}
+                currentUser={currentUser}
+                onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
               />
             )}
 
@@ -628,6 +689,16 @@ export default function App() {
                 activitiesCompletedCount={activitiesCompletedCount}
               />
             )}
+
+            {activeTab === "admin" && (
+              <AdminPanelView
+                currentUser={currentUser}
+                onOpenAuth={() => setShowAuthModal(true)}
+                systemMoods={moods}
+                systemJournals={journals}
+                onNavigateHome={() => setActiveTab("dashboard")}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -674,15 +745,28 @@ export default function App() {
           <span>AI Chat</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab("ptc")}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold ${
-            activeTab === "ptc" ? "text-teal-700" : "text-slate-400"
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>PTC</span>
-        </button>
+        {isAdmin ? (
+          <button
+            id="mobile-nav-admin"
+            onClick={() => setActiveTab("admin")}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-black ${
+              activeTab === "admin" ? "text-amber-600 font-black" : "text-slate-500"
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-600" />
+            <span>Admin</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setActiveTab("ptc")}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-bold ${
+              activeTab === "ptc" ? "text-teal-700" : "text-slate-400"
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>PTC</span>
+          </button>
+        )}
       </div>
 
       {/* Modals */}
@@ -695,6 +779,14 @@ export default function App() {
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
         onResetData={handleClearAllData}
+      />
+
+      <AccountSettingsModal
+        isOpen={isAccountSettingsOpen}
+        onClose={() => setIsAccountSettingsOpen(false)}
+        currentUser={currentUser}
+        currentProfile={currentProfile}
+        onProfileUpdated={(updated) => setCurrentProfile(updated)}
       />
     </div>
   );

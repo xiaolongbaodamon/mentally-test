@@ -90,3 +90,33 @@ export interface DailyHabitLog {
   completedHabits: string[];
   notes?: string;
 }
+
+export const ADMIN_EMAIL = "xiaolongbao312006@gmail.com";
+
+export interface CampusAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  priority: "normal" | "important" | "urgent";
+  author: string;
+  createdAt: string;
+  active: boolean;
+  category?: "guidance" | "wellness" | "academic" | "event";
+}
+
+export interface UserProfileData {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  institution: string;
+  studentId?: string;
+  yearLevel?: string;
+  course?: string;
+  contactNumber?: string;
+  emergencyContact?: string;
+  status?: "Active" | "Guidance Support" | "Alumni" | "Under Review";
+  counselorNotes?: string;
+  createdAt: string;
+  lastLoginAt: string;
+}

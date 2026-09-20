@@ -20,47 +20,57 @@ service cloud.firestore {
       return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    function isAdmin() {
+      return isSignedIn() && (request.auth.token.email == 'xiaolongbao312006@gmail.com');
+    }
+
     // Authenticated Student Profile
     match /users/{userId} {
-      allow get: if isOwner(userId) && isValidId(userId);
-      allow list: if false; // Disallow searching all student profiles
-      allow create, update: if isOwner(userId) && isValidId(userId);
-      allow delete: if isOwner(userId) && isValidId(userId);
+      allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow list: if isAdmin(); // Admin can list all student profiles
+      allow create, update: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId);
 
       // Student Private Mood Logs
       match /moods/{moodId} {
-        allow read, list: if isOwner(userId);
+        allow read, list: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId) && isValidId(moodId);
-        allow delete: if isOwner(userId) && isValidId(moodId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(moodId);
       }
 
       // Student Private Reflective Journals
       match /journals/{journalId} {
-        allow read, list: if isOwner(userId);
+        allow read, list: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId) && isValidId(journalId);
-        allow delete: if isOwner(userId) && isValidId(journalId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(journalId);
       }
 
       // Student Daily Habit Logs
       match /habits/{date} {
-        allow read, list: if isOwner(userId);
+        allow read, list: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId) && isValidId(date);
-        allow delete: if isOwner(userId) && isValidId(date);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(date);
       }
 
       // Standardized Screener Assessments (PHQ-9 / GAD-7)
       match /screeners/{screenerId} {
-        allow read, list: if isOwner(userId);
+        allow read, list: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId) && isValidId(screenerId);
-        allow delete: if isOwner(userId) && isValidId(screenerId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(screenerId);
       }
 
       // CBT Thought Reframing Logs
       match /cbt/{cbtId} {
-        allow read, list: if isOwner(userId);
+        allow read, list: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId) && isValidId(cbtId);
-        allow delete: if isOwner(userId) && isValidId(cbtId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(cbtId);
       }
+    }
+
+    // System and Campus Announcements (Students can read immediately without refresh; Admin can manage)
+    match /announcements/{announcementId} {
+      allow read, list: if true;
+      allow create, update, delete: if isAdmin() && isValidId(announcementId);
     }
   }
 }
