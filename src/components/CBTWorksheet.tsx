@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   Sparkles, 
   HelpCircle, 
@@ -7,8 +7,12 @@ import {
   Plus, 
   BrainCircuit,
   ArrowRight,
-  BookOpen
+  BookOpen,
+  Zap,
+  Activity,
+  ChevronRight
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { COGNITIVE_DISTORTIONS } from "../data/ptcData";
 import { CBTThoughtRecord } from "../types";
 
@@ -39,6 +43,49 @@ export const CBTWorksheet: React.FC = () => {
   const [evidenceAgainst, setEvidenceAgainst] = useState("");
   const [balancedThought, setBalancedThought] = useState("");
   const [outcomeEmotion, setOutcomeEmotion] = useState("");
+
+  // Automated Cognitive Distortion Scanner
+  const autoDetectedDistortion = useMemo(() => {
+    const text = automaticThought.toLowerCase();
+    if (!text.trim()) return null;
+
+    if (/\b(always|never|everyone|nobody|everything|nothing|completely)\b/.test(text)) {
+      return {
+        name: "All-or-Nothing Thinking",
+        hint: "Detected absolute words ('always', 'never'). Thoughts may be polarized.",
+      };
+    }
+    if (/\b(ruined|disaster|terrible|worst|hopeless|fail|failure|end of the world)\b/.test(text)) {
+      return {
+        name: "Catastrophizing",
+        hint: "Detected catastrophic terms. Predicting worst-case outcomes.",
+      };
+    }
+    if (/\b(they think|he thinks|she thinks|everyone knows|judging me|they hate)\b/.test(text)) {
+      return {
+        name: "Mind Reading",
+        hint: "Detected assumption of others' unspoken thoughts without concrete proof.",
+      };
+    }
+    if (/\b(should|must|ought|have to)\b/.test(text)) {
+      return {
+        name: "Should Statements",
+        hint: "Detected rigid rules ('should', 'must') that create undue guilt.",
+      };
+    }
+    if (/\b(my fault|blame myself|because of me)\b/.test(text)) {
+      return {
+        name: "Personalization",
+        hint: "Detected self-blame for events beyond direct individual control.",
+      };
+    }
+
+    return null;
+  }, [automaticThought]);
+
+  const handleApplyDetected = (name: string) => {
+    setCognitiveDistortion(name);
+  };
 
   const handleSaveRecord = () => {
     if (!situation.trim() || !automaticThought.trim() || !balancedThought.trim()) return;
@@ -81,295 +128,292 @@ export const CBTWorksheet: React.FC = () => {
   };
 
   return (
-    <div id="cbt-worksheet" className="space-y-6 animate-in fade-in duration-200">
-      {/* Introduction Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-teal-700 text-xs font-bold uppercase tracking-wider">
-            <BrainCircuit className="w-4 h-4" />
-            <span>Cognitive Restructuring Tool</span>
+    <div id="cbt-worksheet" className="space-y-4">
+      {/* Top Header */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center shrink-0">
+            <BrainCircuit className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">Academic Thought Reframing</h3>
-          <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-            When academic pressure spikes, our minds default to cognitive distortions. 
-            Use this 5-step CBT framework to challenge automatic negative college thoughts with objective evidence.
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-black text-slate-900 tracking-tight">CBT Thought Restructuring</h2>
+              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                {records.length} {records.length === 1 ? "Record" : "Records"}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Cognitive Distortion & Reframing Tool</p>
+          </div>
         </div>
 
         <button
-          onClick={() => setIsFormOpen(!isFormOpen)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs transition-colors shrink-0"
+          id="open-cbt-modal-btn"
+          onClick={() => {
+            setIsFormOpen(!isFormOpen);
+            setStep(1);
+          }}
+          className="flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all w-full sm:w-auto min-h-[38px]"
         >
-          <Plus className="w-4 h-4" />
-          {isFormOpen ? "Cancel Entry" : "New Thought Record"}
+          {isFormOpen ? "Close Workflow" : <><Plus className="w-4 h-4" /> New Reframe</>}
         </button>
       </div>
 
-      {/* Guided 5-Step Form */}
-      {isFormOpen && (
-        <div className="bg-white rounded-2xl border-2 border-teal-500 p-6 shadow-md space-y-6 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-teal-100 text-teal-800 text-xs flex items-center justify-center font-bold">
-                {step}
-              </span>
-              Step {step} of 4: {step === 1 ? "The Situation & Emotion" : step === 2 ? "Automatic Thought & Distortion" : step === 3 ? "Challenging the Evidence" : "Balanced Reframe"}
-            </h4>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4].map((s) => (
-                <div
-                  key={s}
-                  className={`w-6 h-1.5 rounded-full ${s <= step ? "bg-teal-600" : "bg-slate-200"}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  1. What situation or academic event triggered your distress?
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Thesis topic defense question by professor, groupmate not replying, upcoming lab exam..."
-                  value={situation}
-                  onChange={(e) => setSituation(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                />
+      {/* Structured Multi-Step Reframe Form */}
+      <AnimatePresence>
+        {isFormOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-white rounded-2xl border border-teal-300 p-5 shadow-sm space-y-4"
+          >
+            {/* Step Progress Pills */}
+            <div className="grid grid-cols-3 gap-2 pb-2 border-b border-slate-100">
+              <div className={`p-2 rounded-xl text-center border text-xs font-bold transition-all ${step === 1 ? "bg-teal-50 border-teal-300 text-teal-800" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
+                1. Trigger & Thought
               </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  2. What emotion are you feeling, and what is its intensity (1-10)?
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Anxiety (8/10), Humiliation (7/10), Panic (9/10)"
-                  value={emotion}
-                  onChange={(e) => setEmotion(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                />
+              <div className={`p-2 rounded-xl text-center border text-xs font-bold transition-all ${step === 2 ? "bg-teal-50 border-teal-300 text-teal-800" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
+                2. Distortion & Evidence
               </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  disabled={!situation.trim()}
-                  onClick={() => setStep(2)}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 text-white text-xs font-bold"
-                >
-                  Next Step <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              <div className={`p-2 rounded-xl text-center border text-xs font-bold transition-all ${step === 3 ? "bg-teal-50 border-teal-300 text-teal-800" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
+                3. Balanced Perspective
               </div>
             </div>
-          )}
 
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  3. What is the automatic thought or worst-case scenario your mind tells you?
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="e.g., 'Everyone in my section thinks I'm incompetent' or 'If I can't debug this today, my whole capstone is ruined'"
-                  value={automaticThought}
-                  onChange={(e) => setAutomaticThought(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                />
-              </div>
+            {/* Step 1: Situation & Automatic Thought */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Activating Event / Situation
+                  </label>
+                  <input
+                    type="text"
+                    value={situation}
+                    onChange={(e) => setSituation(e.target.value)}
+                    placeholder="e.g. Received a low score on quiz, or groupmate didn't reply..."
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-medium text-slate-800"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  4. Which cognitive trap matches this thought best?
-                </label>
-                <select
-                  value={cognitiveDistortion}
-                  onChange={(e) => setCognitiveDistortion(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                >
-                  {COGNITIVE_DISTORTIONS.map((d) => (
-                    <option key={d.name} value={d.name}>
-                      {d.name} — {d.description.slice(0, 75)}...
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Automatic Negative Thought
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={automaticThought}
+                    onChange={(e) => setAutomaticThought(e.target.value)}
+                    placeholder="What did your brain immediately tell you? (e.g. 'I will always fail at this course...')"
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-medium text-slate-800 resize-none"
+                  />
+                </div>
 
-              <div className="flex justify-between pt-2">
-                <button
-                  onClick={() => setStep(1)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Back
-                </button>
-                <button
-                  disabled={!automaticThought.trim()}
-                  onClick={() => setStep(3)}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 text-white text-xs font-bold"
-                >
-                  Next Step <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  5. What objective evidence or past experiences contradict this thought?
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="e.g., In previous semesters I also struggled with prelims but passed. My professor offered office consultation. One setback doesn't erase all my accomplishments."
-                  value={evidenceAgainst}
-                  onChange={(e) => setEvidenceAgainst(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                />
-              </div>
-
-              <div className="flex justify-between pt-2">
-                <button
-                  onClick={() => setStep(2)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => setStep(4)}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold"
-                >
-                  Next Step <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  6. What is a realistic, balanced, compassionate reframe?
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="e.g., 'I am facing a challenging concept, but I have the resourcefulness to consult my instructor, study with peers, and take it one step at a time.'"
-                  value={balancedThought}
-                  onChange={(e) => setBalancedThought(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  7. How do you feel now after reframing (1-10)?
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Calmer (4/10), Reassured (2/10 anxiety)"
-                  value={outcomeEmotion}
-                  onChange={(e) => setOutcomeEmotion(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                />
-              </div>
-
-              <div className="flex justify-between pt-2">
-                <button
-                  onClick={() => setStep(3)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
-                >
-                  Back
-                </button>
-                <button
-                  disabled={!balancedThought.trim()}
-                  onClick={handleSaveRecord}
-                  className="flex items-center gap-1.5 px-6 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 text-white text-xs font-bold shadow-xs"
-                >
-                  Save Thought Reframe
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Common Cognitive Distortions Glossary Pill Deck */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-          <BookOpen className="w-4 h-4 text-teal-600" />
-          Common College Student Cognitive Traps
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {COGNITIVE_DISTORTIONS.map((cd, idx) => (
-            <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-              <span className="text-xs font-bold text-teal-900 block">{cd.name}</span>
-              <p className="text-[11px] text-slate-600 leading-relaxed">{cd.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Saved Thought Records */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-          Saved Thought Reframes ({records.length})
-        </h4>
-
-        {records.length === 0 ? (
-          <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6">
-            <p className="text-xs text-slate-500">No thought records logged yet. Click "New Thought Record" to reframe an academic anxiety.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {records.map((r) => (
-              <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-                <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                      Trap: {r.cognitiveDistortion}
-                    </span>
-                    <span className="text-[11px] text-slate-400 ml-2">
-                      {new Date(r.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                    </span>
-                    <h5 className="text-xs font-bold text-slate-900 mt-1">Situation: {r.situation}</h5>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    className="text-slate-400 hover:text-rose-600 p-1"
-                    title="Delete record"
+                {/* Automated Distortion Scanner Banner */}
+                {autoDetectedDistortion && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3 text-xs"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-2 text-amber-900">
+                      <Zap className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div>
+                        <span className="font-bold">Detected Pattern: </span>
+                        <span className="font-black text-amber-950">{autoDetectedDistortion.name}</span>
+                        <p className="text-[11px] text-amber-800 mt-0.5">{autoDetectedDistortion.hint}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDetected(autoDetectedDistortion.name)}
+                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-lg shadow-2xs shrink-0 transition-colors"
+                    >
+                      Use Suggestion
+                    </button>
+                  </motion.div>
+                )}
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Initial Emotion & Intensity (1-10)
+                  </label>
+                  <input
+                    type="text"
+                    value={emotion}
+                    onChange={(e) => setEmotion(e.target.value)}
+                    placeholder="e.g. Anxiety (8/10), Embarrassment (7/10)"
+                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    disabled={!situation.trim() || !automaticThought.trim()}
+                    onClick={() => setStep(2)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 active:scale-95 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all"
+                  >
+                    <span>Proceed to Evidence</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
+              </div>
+            )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 bg-rose-50/50 border border-rose-100 rounded-xl space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-rose-800 tracking-wider block">
-                      Automatic Negative Thought
-                    </span>
-                    <p className="text-slate-800 leading-relaxed italic">"{r.automaticThought}"</p>
-                    <span className="text-[10px] text-rose-600 block pt-1 font-semibold">Initial: {r.emotion}</span>
-                  </div>
-
-                  <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-emerald-800 tracking-wider block">
-                      Constructive Reframe
-                    </span>
-                    <p className="text-slate-800 leading-relaxed font-medium">"{r.balancedThought}"</p>
-                    <span className="text-[10px] text-emerald-700 block pt-1 font-semibold">Outcome: {r.outcomeEmotion}</span>
-                  </div>
+            {/* Step 2: Distortion & Evidence Examination */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Selected Cognitive Distortion
+                  </label>
+                  <select
+                    value={cognitiveDistortion}
+                    onChange={(e) => setCognitiveDistortion(e.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-bold text-slate-800"
+                  >
+                    {COGNITIVE_DISTORTIONS.map((d) => (
+                      <option key={d.name} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {r.evidenceAgainst && (
-                  <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg">
-                    <strong>Evidence Considered:</strong> {r.evidenceAgainst}
-                  </div>
-                )}
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Counter-Evidence (Facts challenging this thought)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={evidenceAgainst}
+                    onChange={(e) => setEvidenceAgainst(e.target.value)}
+                    placeholder="What evidence shows this automatic thought isn't 100% factual? Have you overcome similar obstacles before?"
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-medium text-slate-800 resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="px-3 py-1.5 border border-slate-200 text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 active:scale-95 text-white text-xs font-bold rounded-xl transition-all"
+                  >
+                    <span>Form Balanced Thought</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            ))}
+            )}
+
+            {/* Step 3: Balanced Perspective */}
+            {step === 3 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Realistic, Balanced Perspective
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={balancedThought}
+                    onChange={(e) => setBalancedThought(e.target.value)}
+                    placeholder="A grounded, constructive replacement thought (e.g. 'One quiz does not define my degree. I can review the missed concepts and consult my professor.')"
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-medium text-slate-800 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Outcome Emotion & Rating (1-10)
+                  </label>
+                  <input
+                    type="text"
+                    value={outcomeEmotion}
+                    onChange={(e) => setOutcomeEmotion(e.target.value)}
+                    placeholder="e.g. Relief (3/10), Motivated (6/10)"
+                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div className="flex justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="px-3 py-1.5 border border-slate-200 text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!balancedThought.trim()}
+                    onClick={handleSaveRecord}
+                    className="flex items-center gap-1.5 px-5 py-2 bg-teal-700 hover:bg-teal-800 active:scale-95 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow-xs transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Save Reframe
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Stored Records List */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+        {records.length === 0 ? (
+          <div className="text-center py-10 px-4">
+            <BrainCircuit className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-slate-600">No CBT Records Stored</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Click "New Reframe" above to challenge an unhelpful thought.</p>
           </div>
+        ) : (
+          records.map((r) => (
+            <div
+              key={r.id}
+              className="p-4 rounded-xl border border-slate-200 bg-white hover:border-teal-300 transition-all space-y-2.5"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 uppercase">
+                    {r.cognitiveDistortion}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {new Date(r.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                  title="Delete Record"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px] block mb-1">Automatic Thought:</span>
+                  <p className="text-slate-800 italic">"{r.automaticThought}"</p>
+                  <span className="text-[10px] text-rose-700 font-bold block mt-1.5">Initial: {r.emotion}</span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                  <span className="font-bold text-emerald-800 uppercase tracking-wider text-[10px] block mb-1">Balanced Reframe:</span>
+                  <p className="text-emerald-950 font-medium">{r.balancedThought}</p>
+                  <span className="text-[10px] text-emerald-700 font-bold block mt-1.5">Outcome: {r.outcomeEmotion}</span>
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

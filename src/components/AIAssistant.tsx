@@ -3,14 +3,16 @@ import {
   Send, 
   Sparkles, 
   HeartHandshake, 
-  AlertCircle, 
   Wind, 
   Compass, 
   ShieldAlert, 
   Bot, 
   User,
-  RotateCcw
+  RotateCcw,
+  Zap,
+  Activity
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { ChatMessage } from "../types";
 
 interface AIAssistantProps {
@@ -21,10 +23,10 @@ interface AIAssistantProps {
 }
 
 const SAMPLE_QUESTIONS = [
-  "I'm overwhelmed by college exams and deadlines",
-  "Guide me through a 2-minute calming reset",
-  "I feel like I'm falling behind my classmates",
-  "How can I manage thesis stress and sleep better?",
+  "Overwhelmed by exams and deadlines",
+  "Guide me through a 2-min calming reset",
+  "Impostor syndrome in class",
+  "Thesis anxiety & sleep trouble",
 ];
 
 export const AIAssistant: React.FC<AIAssistantProps> = ({
@@ -37,7 +39,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     {
       id: "intro-1",
       role: "assistant",
-      content: "Hello! I'm MentAlly, your AI wellness companion. I'm here to listen, offer gentle grounding support, and help you navigate the stresses of tertiary student life in a non-judgmental space.\n\nHow is your heart and mind doing right now?",
+      content: "Hello! I am your supportive reflection companion. How are your mind and energy feeling right now?",
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -80,7 +82,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       });
 
       const data = await res.json();
-      const reply = data.reply || data.fallback || "I hear you. Remember to take a slow, deep breath. You are doing your best, and that is worthy of respect.";
+      const reply = data.reply || data.fallback || "Take a slow, deep breath. You are doing your best, and your well-being matters.";
 
       setMessages((prev) => [
         ...prev,
@@ -97,7 +99,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         {
           id: "bot-err-" + Date.now(),
           role: "assistant",
-          content: "I'm right here with you. If you are experiencing heavy emotional distress, please consider speaking with your campus guidance counselor or reaching out to the NCMH Crisis Hotline (1553). In the meantime, would you like to do a gentle breathing exercise together?",
+          content: "I am listening. If you are experiencing heavy distress, please reach out to the PTC Guidance Office or call the NCMH Hotline (1553). Would you like to try a short breathing reset?",
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -111,129 +113,126 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       {
         id: "intro-reset",
         role: "assistant",
-        content: "Chat refreshed. I'm listening whenever you're ready to share. How are you feeling today?",
+        content: "Conversation refreshed. Ready whenever you want to reflect.",
         timestamp: new Date().toISOString(),
       },
     ]);
   };
 
   return (
-    <div id="ai-companion-card" className="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col h-[650px] overflow-hidden">
+    <div id="ai-companion-card" className="bg-white rounded-2xl border border-slate-200/90 shadow-xs flex flex-col h-[650px] overflow-hidden">
       {/* Top Companion Header */}
-      <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+      <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-teal-700 text-white flex items-center justify-center shadow-xs">
             <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-900">MentAlly AI Companion</h3>
-              <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">
-                Non-Clinical Support
+              <h3 className="text-sm font-black text-slate-900">Supportive Reflection AI</h3>
+              <span className="text-[10px] bg-teal-50 text-teal-800 border border-teal-200 font-bold px-2 py-0.5 rounded-md">
+                Non-Clinical Companion
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">Trained for student mental wellness & supportive reflection</p>
+            <p className="text-[11px] text-slate-400 font-medium">Safe, confidential space</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={clearChat}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors"
-            title="Clear Chat History"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors"
+            title="Reset Chat"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onOpenEmergency}
-            className="flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-colors"
           >
             <ShieldAlert className="w-3.5 h-3.5" />
-            Crisis Help
+            <span>Crisis</span>
           </button>
-        </div>
-      </div>
-
-      {/* Non-clinical disclaimer tag */}
-      <div className="px-4 py-2 bg-teal-50/50 border-b border-teal-100/60 flex items-center justify-between text-[11px] text-teal-900">
-        <span className="flex items-center gap-1.5">
-          <HeartHandshake className="w-3.5 h-3.5 text-teal-600" />
-          Safe, confidential reflection. Not a substitute for professional clinical therapy.
-        </span>
-        <div className="flex items-center gap-1 text-[10px]">
-          <button onClick={onOpenBreathing} className="underline hover:text-teal-950 font-semibold">Breathe</button>
-          <span>•</span>
-          <button onClick={onOpenGrounding} className="underline hover:text-teal-950 font-semibold">Ground</button>
         </div>
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50/30">
-        {messages.map((m) => {
-          const isUser = m.role === "user";
-          return (
-            <div
-              key={m.id}
-              className={`flex items-start gap-2.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-            >
-              <div
-                className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-xs ${
-                  isUser
-                    ? "bg-slate-700 text-white"
-                    : "bg-teal-600 text-white shadow-xs"
-                }`}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 bg-slate-50/40">
+        <AnimatePresence initial={false}>
+          {messages.map((m) => {
+            const isUser = m.role === "user";
+            return (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex items-start gap-2.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
               >
-                {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-              </div>
-
-              <div
-                className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
-                  isUser
-                    ? "bg-slate-800 text-white rounded-tr-xs"
-                    : "bg-white border border-slate-200 text-slate-800 shadow-xs rounded-tl-xs whitespace-pre-line"
-                }`}
-              >
-                {m.content}
                 <div
-                  className={`text-[9px] mt-1.5 text-right opacity-60`}
+                  className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-xs ${
+                    isUser
+                      ? "bg-slate-800 text-white"
+                      : "bg-teal-700 text-white shadow-2xs"
+                  }`}
                 >
-                  {new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                 </div>
-              </div>
-            </div>
-          );
-        })}
+
+                <div
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                    isUser
+                      ? "bg-slate-800 text-white rounded-tr-xs shadow-2xs font-medium"
+                      : "bg-white border border-slate-200 text-slate-800 shadow-2xs rounded-tl-xs whitespace-pre-line font-normal"
+                  }`}
+                >
+                  {m.content}
+                  <div className="text-[9px] mt-1 text-right opacity-60 font-mono">
+                    {new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
 
         {isLoading && (
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center text-xs">
-              <Bot className="w-4 h-4" />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2.5"
+          >
+            <div className="w-7 h-7 rounded-lg bg-teal-700 text-white flex items-center justify-center text-xs">
+              <Bot className="w-3.5 h-3.5" />
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-xs px-4 py-3 shadow-xs flex items-center gap-2 text-xs text-slate-500">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600 animate-spin" />
-              <span>MentAlly is writing a thoughtful reply...</span>
+            <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-xs px-4 py-2.5 shadow-2xs flex items-center gap-2 text-xs text-slate-500">
+              <span className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-bounce [animation-delay:0.4s]" />
+              </span>
+              <span>Reflecting...</span>
             </div>
-          </div>
+          </motion.div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Suggestion Chips */}
-      <div className="p-2.5 bg-slate-50/90 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px]">
-        <span className="text-slate-400 font-semibold px-1 shrink-0">Quick prompts:</span>
+      {/* Quick Prompts Bar */}
+      <div className="p-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto text-xs">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 shrink-0">Prompts:</span>
         {SAMPLE_QUESTIONS.map((q, idx) => (
           <button
             key={idx}
             onClick={() => handleSendMessage(q)}
-            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-full border border-slate-200 whitespace-nowrap transition-colors"
+            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 whitespace-nowrap font-medium text-[11px] transition-colors"
           >
             {q}
           </button>
         ))}
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-white border-t border-slate-200">
+      {/* Input Field */}
+      <div className="p-3 bg-white border-t border-slate-200">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -246,14 +245,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Share your thoughts or ask for a calming reflection..."
-            className="flex-1 text-xs px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-slate-900"
+            placeholder="Type your reflection..."
+            className="flex-1 text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-teal-600 text-slate-900 font-medium"
           />
           <button
             id="send-chat-btn"
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="p-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white rounded-xl shadow-xs transition-colors"
+            className="p-2.5 bg-teal-700 hover:bg-teal-800 disabled:opacity-40 text-white rounded-xl shadow-xs transition-all active:scale-95 min-h-[38px] min-w-[38px] flex items-center justify-center"
           >
             <Send className="w-4 h-4" />
           </button>
