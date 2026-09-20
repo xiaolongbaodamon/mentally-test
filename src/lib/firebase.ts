@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, updateProfile } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, updateProfile, deleteUser as deleteAuthUser, signOut } from "firebase/auth";
 import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
 
 export const firebaseConfig = {
@@ -204,6 +204,16 @@ export async function saveMoodToFirestore(userId: string, mood: MoodEntry): Prom
   }
 }
 
+export async function deleteMoodFromFirestore(userId: string, moodId: string): Promise<void> {
+  try {
+    const moodRef = doc(db, "users", userId, "moods", moodId);
+    await deleteDoc(moodRef);
+  } catch (err) {
+    console.warn("Could not delete mood from Firestore:", err);
+    throw err;
+  }
+}
+
 export async function fetchMoodsFromFirestore(userId: string): Promise<MoodEntry[]> {
   try {
     const moodsCol = collection(db, "users", userId, "moods");
@@ -367,6 +377,15 @@ export async function saveHabitLogToFirestore(userId: string, habit: DailyHabitL
   }
 }
 
+export async function deleteHabitFromFirestore(userId: string, habitDate: string): Promise<void> {
+  try {
+    const habitRef = doc(db, "users", userId, "habits", habitDate);
+    await deleteDoc(habitRef);
+  } catch (err) {
+    console.warn("Could not delete habit from Firestore:", err);
+  }
+}
+
 export async function fetchHabitsFromFirestore(userId: string): Promise<DailyHabitLog[]> {
   try {
     const habitsCol = collection(db, "users", userId, "habits");
@@ -398,6 +417,15 @@ export async function saveScreenerToFirestore(userId: string, result: ScreenerRe
   }
 }
 
+export async function deleteScreenerFromFirestore(userId: string, screenerId: string): Promise<void> {
+  try {
+    const screenerRef = doc(db, "users", userId, "screeners", screenerId);
+    await deleteDoc(screenerRef);
+  } catch (err) {
+    console.warn("Could not delete screener from Firestore:", err);
+  }
+}
+
 export async function fetchScreenersFromFirestore(userId: string): Promise<ScreenerResult[]> {
   try {
     const screenersCol = collection(db, "users", userId, "screeners");
@@ -426,6 +454,15 @@ export async function saveCBTRecordToFirestore(userId: string, record: CBTThough
     });
   } catch (err) {
     console.warn("Could not save CBT record to Firestore:", err);
+  }
+}
+
+export async function deleteCBTRecordFromFirestore(userId: string, recordId: string): Promise<void> {
+  try {
+    const cbtRef = doc(db, "users", userId, "cbt", recordId);
+    await deleteDoc(cbtRef);
+  } catch (err) {
+    console.warn("Could not delete CBT record from Firestore:", err);
   }
 }
 
@@ -536,6 +573,48 @@ export async function deleteUserFromFirestore(userId: string): Promise<void> {
     await deleteDoc(userRef);
   } catch (err) {
     console.warn("Could not delete user from Firestore:", err);
+    throw err;
+  }
+}
+
+/**
+ * Deletes all subcollections data for a user in Firestore (moods, journals, habits, screeners, cbt)
+ */
+export async function clearAllUserDataFromFirestore(userId: string): Promise<void> {
+  try {
+    const subcollections = ["moods", "journals", "habits", "screeners", "cbt"];
+    for (const sub of subcollections) {
+      const colRef = collection(db, "users", userId, sub);
+      const snap = await getDocs(colRef);
+      const deletes = snap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+      await Promise.all(deletes);
+    }
+  } catch (err) {
+    console.warn("clearAllUserDataFromFirestore notice:", err);
+    throw err;
+  }
+}
+
+/**
+ * Permanently deletes user account, profile document, and all associated mental health records
+ */
+export async function deleteAccountCompletely(userId: string): Promise<void> {
+  try {
+    // 1. Clear all subcollections (moods, journals, habits, etc.)
+    await clearAllUserDataFromFirestore(userId);
+    // 2. Delete main user profile document
+    await deleteDoc(doc(db, "users", userId));
+    // 3. Delete auth account if supported, or sign out
+    if (auth.currentUser && auth.currentUser.uid === userId) {
+      try {
+        await deleteAuthUser(auth.currentUser);
+      } catch (authErr) {
+        console.warn("Auth user deletion notice:", authErr);
+        await signOut(auth);
+      }
+    }
+  } catch (err) {
+    console.error("deleteAccountCompletely error:", err);
     throw err;
   }
 }

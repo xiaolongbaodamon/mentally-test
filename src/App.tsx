@@ -45,6 +45,7 @@ import {
   testFirestoreConnection,
   syncUserProfile,
   saveMoodToFirestore,
+  deleteMoodFromFirestore,
   fetchMoodsFromFirestore,
   subscribeToMoods,
   saveJournalToFirestore,
@@ -53,6 +54,7 @@ import {
   subscribeToJournals,
   subscribeToUserProfile,
   subscribeToAnnouncements,
+  clearAllUserDataFromFirestore,
 } from "./lib/firebase";
 
 export type MainTab = 
@@ -271,8 +273,15 @@ export default function App() {
     }
   };
 
-  const handleDeleteMood = (id: string) => {
-    setMoods(moods.filter((m) => m.id !== id));
+  const handleDeleteMood = async (id: string) => {
+    setMoods((prev) => prev.filter((m) => m.id !== id));
+    if (currentUser) {
+      try {
+        await deleteMoodFromFirestore(currentUser.uid, id);
+      } catch (err) {
+        console.warn("Could not delete mood from Firestore:", err);
+      }
+    }
   };
 
   const handleAddJournal = (entryData: Omit<JournalEntry, "id" | "timestamp">) => {
@@ -287,10 +296,14 @@ export default function App() {
     }
   };
 
-  const handleDeleteJournal = (id: string) => {
-    setJournals(journals.filter((j) => j.id !== id));
+  const handleDeleteJournal = async (id: string) => {
+    setJournals((prev) => prev.filter((j) => j.id !== id));
     if (currentUser) {
-      deleteJournalFromFirestore(currentUser.uid, id);
+      try {
+        await deleteJournalFromFirestore(currentUser.uid, id);
+      } catch (err) {
+        console.warn("Could not delete journal from Firestore:", err);
+      }
     }
   };
 
@@ -307,8 +320,15 @@ export default function App() {
     setActivitiesCompletedCount((prev) => prev + 1);
   };
 
-  const handleClearAllData = () => {
-    if (window.confirm("Do you want to reset MentAlly to a clean slate? This will clear all locally saved logs from this device.")) {
+  const handleClearAllData = async () => {
+    if (window.confirm("Do you want to reset your wellness logs? This will delete all saved mood and journal records from this device and your cloud account.")) {
+      if (currentUser) {
+        try {
+          await clearAllUserDataFromFirestore(currentUser.uid);
+        } catch (err) {
+          console.warn("Could not clear user cloud data:", err);
+        }
+      }
       localStorage.removeItem("mentally_moods");
       localStorage.removeItem("mentally_journals");
       localStorage.removeItem("mentally_habits");
@@ -320,7 +340,6 @@ export default function App() {
       setMoods([]);
       setJournals([]);
       setActivitiesCompletedCount(0);
-      window.location.reload();
     }
   };
 
